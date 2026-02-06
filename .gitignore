@@ -39,3 +39,30 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local
+bindings.json
+*.log
+curl_output*
+check_autoglm.js
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Optional: more specific secrets
+.env.local
+.env.development.local
+.env.test.local
+# Documentation
+docs/*.docx
+docs/*.doc
+docs/*.pdf
+docs/PRD.md
+

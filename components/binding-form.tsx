@@ -1,0 +1,189 @@
+"use client"
+
+import * as React from "react"
+import { ProtocolBinding } from "@/services/binding"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+
+
+interface BindingFormProps {
+    initialData?: Partial<ProtocolBinding>
+    onSubmit: (data: Partial<ProtocolBinding>) => void
+    onCancel: () => void
+}
+
+export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProps) {
+    const [formData, setFormData] = React.useState<Partial<ProtocolBinding>>(
+        initialData || {
+            name: "",
+            targetUrl: "",
+            targetProtocol: "autoglm",
+            authType: "bearer",
+            authKey: "",
+            model: "",
+            enabled: true,
+        }
+    )
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target
+        setFormData((prev) => ({ ...prev, [name]: value }))
+    }
+
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData((prev) => ({ ...prev, enabled: checked }))
+    }
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        onSubmit(formData)
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col h-[80vh]">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                <div className="grid w-full gap-1.5">
+                    <Label htmlFor="name">Friendly Name</Label>
+                    <Input
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="My Agent"
+                        required
+                    />
+                </div>
+
+                <div className="grid w-full gap-1.5">
+                    <Label htmlFor="targetProtocol">Protocol</Label>
+                    <select
+                        id="targetProtocol"
+                        name="targetProtocol"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.targetProtocol}
+                        onChange={handleChange}
+                    >
+                        <option value="autoglm">AutoGLM (WebSocket)</option>
+                        <option value="custom">Custom (HTTP)</option>
+                    </select>
+                </div>
+
+                {formData.targetProtocol === "custom" && (
+                    <>
+                        <div className="grid w-full gap-1.5">
+                            <Label htmlFor="requestTemplate">Request Mapping (JSON Template)</Label>
+                            <div className="text-xs text-muted-foreground space-y-2">
+                                <p>Map Lingzhu fields to your API's request body using double curly braces: {'{{path}}'}.</p>
+                                <div className="bg-muted p-2 rounded-md font-mono text-[10px] whitespace-pre-wrap">
+                                    {`// Available Lingzhu Variables:
+// {{message.0.text}} - Latest user message
+// {{model}} - Selected model
+// {{stream}} - Boolean
+
+// Example Request Template:
+{
+  "model": "llama3",
+  "prompt": "{{message.0.text}}",
+  "stream": true,
+  "options": { "temperature": 0.7 }
+}`}
+                                </div>
+                            </div>
+                            <textarea
+                                id="requestTemplate"
+                                name="requestTemplate"
+                                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={formData.requestTemplate || ""}
+                                onChange={(e) => setFormData(prev => ({ ...prev, requestTemplate: e.target.value }))}
+                                placeholder='{"prompt": "{{message.0.text}}", "stream": true}'
+                            />
+                        </div>
+                        <div className="grid w-full gap-1.5">
+                            <Label htmlFor="responseTemplate">Response Mapping (JSON Template)</Label>
+                            <div className="text-xs text-muted-foreground space-y-2">
+                                <p>Map your API's response back to Lingzhu fields.</p>
+                                <div className="bg-muted p-2 rounded-md font-mono text-[10px] whitespace-pre-wrap">
+                                    {`// Target Lingzhu Fields:
+// "answer" (Required) - The text reply
+// "is_finish" (Optional) - Request completion status
+
+// Example Response Template:
+{
+  "answer": "{{data.text}}",
+  "is_finish": "{{data.finished}}"
+}`}
+                                </div>
+                            </div>
+                            <textarea
+                                id="responseTemplate"
+                                name="responseTemplate"
+                                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={formData.responseTemplate || ""}
+                                onChange={(e) => setFormData(prev => ({ ...prev, responseTemplate: e.target.value }))}
+                                placeholder='{"answer": "{{response.field}}", "is_finish": "{{response.status}}"}'
+                            />
+                        </div>
+                        <div className="grid w-full gap-1.5">
+                            <Label htmlFor="finishMatchValue">Finish Match Value (Optional)</Label>
+                            <p className="text-[10px] text-muted-foreground">
+                                If the mapped 'is_finish' field matches this string (e.g. "stop", "completed"), the request is marked as finished.
+                                If left empty, the field is treated as a boolean.
+                            </p>
+                            <Input
+                                id="finishMatchValue"
+                                name="finishMatchValue"
+                                value={formData.finishMatchValue || ""}
+                                onChange={handleChange}
+                                placeholder='e.g. stop'
+                            />
+                        </div>
+                    </>
+                )}
+
+
+
+                <div className="grid w-full gap-1.5">
+                    <Label htmlFor="targetUrl">Target URL</Label>
+                    <Input
+                        id="targetUrl"
+                        name="targetUrl"
+                        value={formData.targetUrl}
+                        onChange={handleChange}
+                        placeholder="wss://api.example.com/..."
+                        required
+                    />
+                </div>
+
+                <div className="grid w-full gap-1.5">
+                    <Label htmlFor="authKey">Auth Key (Bearer Token)</Label>
+                    <Input
+                        id="authKey"
+                        name="authKey"
+                        value={formData.authKey}
+                        onChange={handleChange}
+                        type="password"
+                        placeholder="sk-..."
+                    />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id="enabled"
+                        checked={formData.enabled}
+                        onCheckedChange={handleSwitchChange}
+                    />
+                    <Label htmlFor="enabled">Enabled</Label>
+                </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button variant="outline" type="button" onClick={onCancel}>
+                    Cancel
+                </Button>
+                <Button type="submit">Save Binding</Button>
+            </div>
+        </form>
+    )
+}

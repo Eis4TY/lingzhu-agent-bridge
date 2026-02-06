@@ -1,0 +1,12 @@
+[
+    {
+        "name": "Example OpenAI",
+        "targetUrl": "https://api.openai.com/v1/chat/completions",
+        "targetProtocol": "openai",
+        "authType": "bearer",
+        "authKey": "sk-...",
+        "enabled": true,
+        "id": "example-id-1",
+        "model": "gpt-3.5-turbo"
+    }
+]

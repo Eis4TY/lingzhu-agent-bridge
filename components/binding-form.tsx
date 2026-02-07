@@ -19,7 +19,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
         initialData || {
             name: "",
             targetUrl: "",
-            targetProtocol: "autoglm",
+            targetProtocol: "openai",
             authType: "bearer",
             authKey: "",
             model: "",
@@ -43,7 +43,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-[80vh]">
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+            <div className="flex-1 overflow-y-auto overflow-x-visible px-1 pr-2 space-y-4">
                 <div className="grid w-full gap-1.5">
                     <Label htmlFor="name">Friendly Name</Label>
                     <Input
@@ -65,7 +65,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                         value={formData.targetProtocol}
                         onChange={handleChange}
                     >
-                        <option value="autoglm">AutoGLM (WebSocket)</option>
+                        <option value="openai">OpenAI (HTTP)</option>
                         <option value="custom">Custom (HTTP)</option>
                     </select>
                 </div>

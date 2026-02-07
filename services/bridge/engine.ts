@@ -1,10 +1,7 @@
+import { LingzhuRequest } from '@/protocols/types';
+import { ProtocolTransformer } from '@/services/bridge/transformer';
 import { getBinding } from '@/services/binding';
-import { AutoGLMClient } from '@/protocols/autoglm';
-import { LingzhuRequest, LingzhuMessage } from '@/protocols/types';
-import { ProtocolTransformer } from './transformer';
 
-
-const activeClients: Map<string, AutoGLMClient> = new Map();
 
 export async function handleBridgeRequest(
     agentId: string,
@@ -19,90 +16,16 @@ export async function handleBridgeRequest(
         return;
     }
 
-    if (binding.targetProtocol === 'autoglm') {
-        let client = activeClients.get(agentId);
-        if (!client) {
-            if (!binding.targetUrl || !binding.authKey) {
-                sendEvent(JSON.stringify({ error: 'Missing AutoGLM configuration' }));
-                closeStream();
-                return;
-            }
-            client = new AutoGLMClient(binding.targetUrl, binding.authKey);
-            client.connect();
-            activeClients.set(agentId, client);
-        }
-
-        const conversationId = crypto.randomUUID();
-
-        // Setup listener for this request
-        const messageHandler = async (msg: any) => {
-            try {
-                const lingzhuMsg = await ProtocolTransformer.transformResponse('autoglm', msg, request.message_id, {
-                    finishMatchValue: binding.finishMatchValue
-                });
-                sendEvent(JSON.stringify(lingzhuMsg));
-
-                if (lingzhuMsg.is_finish) {
-                    client?.off('message', messageHandler);
-                    closeStream();
-                }
-            } catch (e) {
-                console.error('Transformation error:', e);
-            }
-        };
-
-        client.on('message', messageHandler);
-
-        // Send instruction
-        const sendFn = async () => {
-            if (client) {
-                try {
-                    const payload = await ProtocolTransformer.transformRequest('autoglm', request, conversationId);
-                    // AutoGLM Client currently takes instruction string, we might need to update it to take full payload 
-                    // or just extract instruction here for now to keep client simple, 
-                    // BUT for Sandbox we need the full payload. 
-                    // Let's adjust AutoGLMClient to accept payload or keep it specific?
-                    // For now, let's keep the client method simple but use the transformer to "verify" or "generate" the structure if needed.
-                    // Actually, to make Sandbox useful, we want to see the JSON.
-                    // So we should probably update AutoGLMClient to send a generic JSON payload if we want full flexibility.
-                    // But strictly following current abstraction:
-
-                    // Re-extract instruction from payload for the specific client definition
-                    const instruction = (payload as any).data.instruction;
-                    client.sendInstruction(instruction, conversationId);
-                } catch (e) {
-                    sendEvent(JSON.stringify({ role: 'system', type: 'error', answer: 'Failed to transform/send request: ' + String(e) }));
-                    closeStream();
-                }
-            }
-        };
-
-        if (client.isConnected) {
-            sendFn();
-        } else {
-            client.once('open', sendFn);
-            client.once('error', (err) => {
-                sendEvent(JSON.stringify({ role: 'system', type: 'error', answer: String(err) }));
-                closeStream();
-            });
-        }
-
-        // Safety timeout
-        setTimeout(() => {
-            client?.off('message', messageHandler);
-            // closeStream(); // Don't close strictly, maybe long running
-        }, 60000);
-
-
-    } else if (binding.targetProtocol === 'custom') {
+    if (binding.targetProtocol === 'custom' || binding.targetProtocol === 'openai') {
+        const protocol = binding.targetProtocol;
         try {
             const conversationId = crypto.randomUUID();
             // 1. Transform Request
             const transformedRequest = await ProtocolTransformer.transformRequest(
-                'custom',
+                protocol,
                 request,
                 conversationId,
-                { requestTemplate: binding.requestTemplate }
+                { requestTemplate: binding.requestTemplate, model: binding.model }
             );
 
             // 2. Execute Request
@@ -120,32 +43,92 @@ export async function handleBridgeRequest(
                 body: JSON.stringify(transformedRequest)
             });
 
-            // For Bridge API, we buffer the response to transform it to Lingzhu format
-            // We can't easily stream "Raw Chunks" -> "Lingzhu Objects" yet without a complex stream transformer.
-            const text = await res.text();
-            let rawResponse;
-            try {
-                rawResponse = JSON.parse(text);
-            } catch {
-                rawResponse = { text_response: text };
+            if (!res.body) {
+                throw new Error('Response body is null');
             }
 
-            // 3. Transform Response
-            const lingzhuMsg = await ProtocolTransformer.transformResponse(
-                'custom',
-                rawResponse,
-                request.message_id,
-                {
-                    responseTemplate: binding.responseTemplate,
-                    finishMatchValue: binding.finishMatchValue
-                }
-            );
+            // Check if it's an event stream
+            const contentType = res.headers.get('content-type');
+            if (contentType?.includes('text/event-stream')) {
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
 
-            sendEvent(JSON.stringify(lingzhuMsg));
-            closeStream();
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
+
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || ''; // Keep the incomplete line in buffer
+
+                        for (const line of lines) {
+                            if (line.trim() === '') continue;
+                            if (line.startsWith('data: ')) {
+                                const data = line.slice(6);
+                                if (data === '[DONE]') continue;
+
+                                try {
+                                    const rawResponse = JSON.parse(data);
+                                    const lingzhuMsg = await ProtocolTransformer.transformResponse(
+                                        protocol,
+                                        rawResponse,
+                                        request.message_id,
+                                        request.agent_id,
+                                        {
+                                            responseTemplate: binding.responseTemplate,
+                                            finishMatchValue: binding.finishMatchValue
+                                        }
+                                    );
+                                    sendEvent(JSON.stringify(lingzhuMsg));
+
+                                    if (lingzhuMsg.is_finish) {
+                                        // We don't close immediately here for streams, we let the stream finish naturally
+                                        // or if we want to enforce finish:
+                                        // closeStream();
+                                        // break; 
+                                    }
+                                } catch (e) {
+                                    console.warn('Failed to parse/transform chunk:', e);
+                                }
+                            }
+                        }
+                    }
+                } finally {
+                    reader.releaseLock();
+                }
+                closeStream();
+            } else {
+                // Non-streaming fallback
+                const text = await res.text();
+                let rawResponse;
+                try {
+                    rawResponse = JSON.parse(text);
+                } catch {
+                    rawResponse = { text_response: text };
+                }
+
+                // 3. Transform Response
+                const lingzhuMsg = await ProtocolTransformer.transformResponse(
+                    protocol,
+                    rawResponse,
+                    request.message_id,
+                    request.agent_id,
+                    {
+                        responseTemplate: binding.responseTemplate,
+                        finishMatchValue: binding.finishMatchValue
+                    }
+                );
+
+                sendEvent(JSON.stringify(lingzhuMsg));
+                closeStream();
+            }
 
         } catch (e) {
-            sendEvent(JSON.stringify({ role: 'system', type: 'error', answer: 'Custom Protocol Error: ' + String(e) }));
+            sendEvent(JSON.stringify({ role: 'system', type: 'error', answer: 'Protocol Error: ' + String(e) }));
             closeStream();
         }
     } else {

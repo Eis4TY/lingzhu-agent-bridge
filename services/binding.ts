@@ -8,7 +8,7 @@ export interface ProtocolBinding {
     name: string;
     enabled: boolean;
     targetUrl: string;
-    targetProtocol: 'autoglm' | 'custom';
+    targetProtocol: 'openai' | 'custom';
     model?: string;
     authType?: 'bearer' | 'header' | 'none';
     authKey?: string;

@@ -1,4 +1,4 @@
-import { LingzhuRequest, LingzhuMessage, AutoGLMRequest } from '@/protocols/types';
+import { LingzhuRequest, LingzhuMessage } from '@/protocols/types';
 import { substituteTemplate } from '@/services/utils';
 
 export class ProtocolTransformer {
@@ -6,28 +6,25 @@ export class ProtocolTransformer {
         targetProtocol: string,
         request: LingzhuRequest,
         conversationId: string,
-        config?: { requestTemplate?: string }
+        config?: { requestTemplate?: string; model?: string }
     ): Promise<unknown> {
         if (targetProtocol === 'custom') {
             if (!config?.requestTemplate) {
                 throw new Error('Request template required for custom protocol');
             }
             return substituteTemplate(config.requestTemplate, request);
-        } else if (targetProtocol === 'autoglm') {
-            const userMessage = request.message.find(m => m.role === 'user');
-            if (!userMessage) throw new Error('No user message found');
-
-            const payload: AutoGLMRequest = {
-                timestamp: Date.now(),
-                conversation_id: conversationId,
-                msg_type: 'client_test',
-                msg_id: request.message_id || crypto.randomUUID(),
-                data: {
-                    biz_type: 'test_agent',
-                    instruction: userMessage.text
-                }
+        } else if (targetProtocol === 'openai') {
+            if (config?.requestTemplate) {
+                return substituteTemplate(config.requestTemplate, request);
+            }
+            return {
+                model: config?.model || "gpt-3.5-turbo",
+                messages: request.message.map(m => ({
+                    role: m.role,
+                    content: m.text
+                })),
+                stream: true
             };
-            return payload;
         }
         throw new Error(`Protocol ${targetProtocol} not supported for request transformation`);
     }
@@ -36,6 +33,7 @@ export class ProtocolTransformer {
         targetProtocol: string,
         response: unknown,
         originalMessageId: string,
+        agentId: string,
         config?: { responseTemplate?: string; finishMatchValue?: string }
     ): Promise<LingzhuMessage> {
         let mapped: Partial<LingzhuMessage> = {};
@@ -55,17 +53,28 @@ export class ProtocolTransformer {
                 // If the template mapped is_finish, capture it potentially as string
                 rawIsFinish = (result as any).is_finish;
             }
-        } else if (targetProtocol === 'autoglm') {
-            // ... existing autoglm logic
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const res = response as any;
-            const isFinish = res.status === 'completed' || res.status === 'failed';
-            mapped = {
-                is_finish: isFinish,
-                answer: typeof res.data === 'string' ? res.data : JSON.stringify(res.data),
-                answer_stream: typeof res.data === 'string' ? res.data : undefined
-            };
-            rawIsFinish = isFinish;
+        } else if (targetProtocol === 'openai') {
+            if (config?.responseTemplate) {
+                const result = substituteTemplate(config.responseTemplate, response);
+                mapped = result as Partial<LingzhuMessage>;
+                rawIsFinish = (result as any).is_finish;
+            } else {
+                const resp = response as any;
+                const choice = resp?.choices?.[0];
+                const content =
+                    choice?.delta?.content ??
+                    choice?.message?.content ??
+                    choice?.text ??
+                    resp?.text_response ??
+                    "";
+                mapped = {
+                    answer: content
+                };
+                rawIsFinish =
+                    choice?.finish_reason ??
+                    resp?.finish_reason ??
+                    false;
+            }
         } else {
             throw new Error(`Protocol ${targetProtocol} not supported for response transformation`);
         }
@@ -87,6 +96,7 @@ export class ProtocolTransformer {
             type: 'answer',
             answer_stream: mapped.answer_stream || mapped.answer || "",
             message_id: originalMessageId, // Must match request message_id
+            agent_id: agentId,
             is_finish: finalIsFinish
         };
     }

@@ -45,6 +45,8 @@ bindings.json
 *.log
 curl_output*
 check_autoglm.js
+settings.json
+logs.json
 
 # IDEs
 .vscode/
@@ -65,4 +67,3 @@ docs/*.docx
 docs/*.doc
 docs/*.pdf
 docs/PRD.md
-

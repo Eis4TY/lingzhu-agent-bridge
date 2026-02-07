@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
                     binding.targetProtocol,
                     request as LingzhuRequest,
                     request.metadata?.conversation_id || 'sandbox-test',
-                    { requestTemplate: binding.requestTemplate }
+                    { requestTemplate: binding.requestTemplate, model: binding.model }
                 );
                 sendEvent('trace', `[${Date.now() - startTime}ms] Request Transformed successfully.`);
                 sendEvent('transformed_request', transformedRequest);
@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
             if (execute) {
                 let rawResponse = null;
 
-                // Custom Protocol
-                if (binding.targetProtocol === 'custom') {
+                // Custom/OpenAI Protocol
+                if (binding.targetProtocol === 'custom' || binding.targetProtocol === 'openai') {
                     try {
                         sendEvent('trace', `[${Date.now() - startTime}ms] Sending Request to ${binding.targetUrl}...`);
                         const headers: Record<string, string> = {
@@ -91,9 +91,10 @@ export async function POST(req: NextRequest) {
                             // Transform immediately since it's full response
                             try {
                                 finalTransformed = await ProtocolTransformer.transformResponse(
-                                    'custom',
+                                    binding.targetProtocol,
                                     rawResponse,
                                     request.message_id || 'sandbox-msg-id',
+                                    request.agent_id || 'sandbox-agent-id',
                                     {
                                         responseTemplate: binding.responseTemplate,
                                         finishMatchValue: binding.finishMatchValue
@@ -164,9 +165,10 @@ export async function POST(req: NextRequest) {
                                 if (currentSource) {
                                     try {
                                         currentTransformed = await ProtocolTransformer.transformResponse(
-                                            'custom',
+                                            binding.targetProtocol,
                                             currentSource,
                                             request.message_id || 'sandbox-msg-id',
+                                            request.agent_id || 'sandbox-agent-id',
                                             {
                                                 responseTemplate: binding.responseTemplate,
                                                 finishMatchValue: binding.finishMatchValue
@@ -191,35 +193,12 @@ export async function POST(req: NextRequest) {
                             }
                         }
 
-                        sendEvent('trace', `[${Date.now() - startTime}ms] Custom Execution Success.`);
+                        sendEvent('trace', `[${Date.now() - startTime}ms] Execution Success.`);
 
                     } catch (e) {
-                        sendEvent('trace', `[${Date.now() - startTime}ms] Custom Execution Failed: ${e}`);
+                        sendEvent('trace', `[${Date.now() - startTime}ms] Execution Failed: ${e}`);
                         sendEvent('error', `Execution Failed: ${e}`);
                     }
-                }
-                // AutoGLM (Mock)
-                else if (binding.targetProtocol === 'autoglm') {
-                    rawResponse = {
-                        msg_id: 'mock-response-id',
-                        status: 'completed',
-                        data: 'This is a simulated response from the Sandbox.'
-                    };
-
-                    const transformed = await ProtocolTransformer.transformResponse(
-                        'autoglm',
-                        rawResponse,
-                        request.message_id || 'sandbox-msg-id',
-                        {}
-                    );
-
-                    sendEvent('trace', `[${Date.now() - startTime}ms] AutoGLM Execution Mocked.`);
-                    sendEvent('raw_response_chunk', {
-                        index: 0,
-                        data: JSON.stringify(rawResponse, null, 2),
-                        transformed: transformed,
-                        timestamp: Date.now()
-                    });
                 }
 
 
@@ -238,6 +217,7 @@ export async function POST(req: NextRequest) {
                         'openai', // Assume OpenAI structure for mock
                         rawResponse,
                         request.message_id || 'sandbox-msg-id',
+                        request.agent_id || 'sandbox-agent-id',
                         {}
                     );
 
@@ -257,6 +237,7 @@ export async function POST(req: NextRequest) {
                             binding.targetProtocol,
                             rawResponse,
                             request.message_id || 'sandbox-msg-id',
+                            request.agent_id || 'sandbox-agent-id',
                             {
                                 responseTemplate: binding.responseTemplate,
                                 finishMatchValue: binding.finishMatchValue
@@ -268,10 +249,9 @@ export async function POST(req: NextRequest) {
                         sendEvent('error', `Response Transformation Failed: ${e}`);
                     }
                 }
+                sendEvent('done', {});
+                controller.close();
             }
-
-            sendEvent('done', {});
-            controller.close();
         }
     });
 

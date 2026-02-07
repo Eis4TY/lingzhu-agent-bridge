@@ -12,8 +12,11 @@ export function SiteHeader() {
                 <nav className="flex items-center space-x-6 text-sm font-medium">
                     <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">Dashboard</Link>
                     <Link href="/sandbox" className="transition-colors hover:text-foreground/80 text-foreground/60">Sandbox</Link>
-                    <ModeToggle />
+                    <Link href="/logs" className="transition-colors hover:text-foreground/80 text-foreground/60">Logs</Link>
                 </nav>
+                <div className="ml-auto flex items-center space-x-4">
+                    <ModeToggle />
+                </div>
             </div>
         </header>
     )

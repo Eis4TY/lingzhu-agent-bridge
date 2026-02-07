@@ -18,6 +18,7 @@ import { Play, Copy, Check } from "lucide-react"
 export function Sandbox() {
     const [bindings, setBindings] = React.useState<ProtocolBinding[]>([])
     const [selectedBindingId, setSelectedBindingId] = React.useState<string>("")
+    const [apiKey, setApiKey] = React.useState<string>("") // Add API Key state
     const [inputJson, setInputJson] = React.useState<string>(JSON.stringify({
         message_id: "1021",
         agent_id: "40b8cc2b2f7843feb8cfe17b8921b877",
@@ -32,6 +33,10 @@ export function Sandbox() {
 
     React.useEffect(() => {
         fetch("/api/bindings").then(res => res.json()).then(setBindings)
+        // Fetch settings to get API Key
+        fetch("/api/settings").then(res => res.json()).then(data => {
+            if (data.apiKey) setApiKey(data.apiKey)
+        }).catch(err => console.error("Failed to load settings", err))
     }, [])
 
     const handleTest = async () => {
@@ -130,8 +135,17 @@ export function Sandbox() {
         if (!selectedBindingId) return
         const url = `${window.location.origin}/api/bridge/${selectedBindingId}`
         const escapedJson = inputJson.replace(/'/g, "'\\''")
-        const curlCommand = `curl -X POST "${url}" \\
-  -H "Content-Type: application/json" \\
+
+        // Construct curl command with optional Auth header
+        let curlCommand = `curl -X POST "${url}" \\
+  -H "Content-Type: application/json"`
+
+        if (apiKey) {
+            curlCommand += ` \\
+  -H "Authorization: Bearer ${apiKey}"`
+        }
+
+        curlCommand += ` \\
   -d '${escapedJson}'`
 
         try {

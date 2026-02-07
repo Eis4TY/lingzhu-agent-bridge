@@ -45,7 +45,8 @@ npm run dev
 ### 1. 创建绑定 (Binding)
 
 在控制台主页点击 "新建绑定"，配置 Agent 的基本信息：
-- **Target Protocol**: 选择目标协议（AutoGLM 或 Custom）。
+- **OpenAI Compatible**: Connect to any OpenAI-compatible API (e.g. local LLMs, other hosted services).
+- **Custom Protocol**: Generic HTTP/JSON integration for any agent API.
 - **Target URL**: 目标服务的接口地址。
 - **Auth Key**: (可选) 鉴权密钥 (Bearer Token)。
 

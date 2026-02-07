@@ -3,6 +3,7 @@
 import * as React from "react"
 import { ProtocolBinding } from "@/services/binding"
 import { BindingForm } from "@/components/binding-form"
+import { SettingsDialog } from "@/components/settings-dialog"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -38,6 +39,7 @@ import { Plus, Trash2, Settings, Activity, Copy, Check } from "lucide-react"
 export function Dashboard() {
     const [bindings, setBindings] = React.useState<ProtocolBinding[]>([])
     const [isNewOpen, setIsNewOpen] = React.useState(false)
+    const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
     const [editingBinding, setEditingBinding] = React.useState<ProtocolBinding | null>(null)
     const [healthStatus, setHealthStatus] = React.useState<Record<string, { status: 'unknown' | 'loading' | 'connected' | 'error', message?: string }>>({});
     const [copiedId, setCopiedId] = React.useState<string | null>(null)
@@ -112,9 +114,45 @@ export function Dashboard() {
 
     const copyToClipboard = (id: string) => {
         const url = `${window.location.origin}/api/bridge/${id}`
-        navigator.clipboard.writeText(url)
-        setCopiedId(id)
-        setTimeout(() => setCopiedId(null), 2000)
+
+        // Try using the Clipboard API
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    setCopiedId(id)
+                    setTimeout(() => setCopiedId(null), 2000)
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err)
+                })
+        } else {
+            // Fallback for non-secure contexts (e.g., HTTP on LAN)
+            const textArea = document.createElement("textarea")
+            textArea.value = url
+
+            // Avoid scrolling to bottom
+            textArea.style.top = "0"
+            textArea.style.left = "0"
+            textArea.style.position = "fixed"
+
+            document.body.appendChild(textArea)
+            textArea.focus()
+            textArea.select()
+
+            try {
+                const successful = document.execCommand('copy')
+                if (successful) {
+                    setCopiedId(id)
+                    setTimeout(() => setCopiedId(null), 2000)
+                } else {
+                    console.error('Fallback: Copy command was unsuccessful')
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err)
+            }
+
+            document.body.removeChild(textArea)
+        }
     }
 
     return (
@@ -124,23 +162,35 @@ export function Dashboard() {
                     <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
                     <p className="text-muted-foreground">Manage your agent bridges and monitor their status.</p>
                 </div>
-                <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
-                    <DialogTrigger asChild>
-                        <Button><Plus className="mr-2 h-4 w-4" /> New Binding</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create New Binding</DialogTitle>
-                            <DialogDescription>
-                                Connect a new AI Agent via Lingzhu Protocol.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <BindingForm
-                            onSubmit={handleCreate}
-                            onCancel={() => setIsNewOpen(false)}
-                        />
-                    </DialogContent>
-                </Dialog>
+                <div className="flex items-center space-x-2">
+                    <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon" title="Global Settings">
+                                <Settings className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <SettingsDialog onClose={() => setIsSettingsOpen(false)} />
+                        </DialogContent>
+                    </Dialog>
+                    <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
+                        <DialogTrigger asChild>
+                            <Button><Plus className="mr-2 h-4 w-4" /> New Binding</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Create New Binding</DialogTitle>
+                                <DialogDescription>
+                                    Connect a new AI Agent via Lingzhu Protocol.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <BindingForm
+                                onSubmit={handleCreate}
+                                onCancel={() => setIsNewOpen(false)}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -242,15 +292,18 @@ export function Dashboard() {
                                 </AlertDialog>
                             </div>
                         </CardFooter>
-                    </Card>
-                ))}
+                    </Card >
+                ))
+                }
 
-                {bindings.length === 0 && (
-                    <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                        No bindings found. Create one to get started.
-                    </div>
-                )}
-            </div>
-        </div>
+                {
+                    bindings.length === 0 && (
+                        <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                            No bindings found. Create one to get started.
+                        </div>
+                    )
+                }
+            </div >
+        </div >
     )
 }

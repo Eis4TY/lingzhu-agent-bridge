@@ -75,19 +75,20 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                         <div className="grid w-full gap-1.5">
                             <Label htmlFor="requestTemplate">Request Mapping (JSON Template)</Label>
                             <div className="text-xs text-muted-foreground space-y-2">
-                                <p>Map Lingzhu fields to your API's request body using double curly braces: {'{{path}}'}.</p>
+                                <p>通过 {'{{path}}'} 提取 Lingzhu 字段。</p>
                                 <div className="bg-muted p-2 rounded-md font-mono text-[10px] whitespace-pre-wrap">
-                                    {`// Available Lingzhu Variables:
-// {{message.0.text}} - Latest user message
-// {{model}} - Selected model
-// {{stream}} - Boolean
+                                    {`// 常用变量:
+// {{message.0.text}} - 用户发送的文本
+// {{message.0.image_url}} - 图片链接 (如有)
+// {{model}} - 模型名称
+// {{stream}} -流式 boolean
 
-// Example Request Template:
+// 请求示例:
 {
   "model": "llama3",
   "prompt": "{{message.0.text}}",
-  "stream": true,
-  "options": { "temperature": 0.7 }
+  "image": "{{message.0.image_url}}",
+  "stream": true
 }`}
                                 </div>
                             </div>
@@ -103,13 +104,13 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                         <div className="grid w-full gap-1.5">
                             <Label htmlFor="responseTemplate">Response Mapping (JSON Template)</Label>
                             <div className="text-xs text-muted-foreground space-y-2">
-                                <p>Map your API's response back to Lingzhu fields.</p>
+                                <p>提取 API 响应字段。</p>
                                 <div className="bg-muted p-2 rounded-md font-mono text-[10px] whitespace-pre-wrap">
-                                    {`// Target Lingzhu Fields:
-// "answer" (Required) - The text reply
-// "is_finish" (Optional) - Request completion status
+                                    {`// Lingzhu 目标字段:
+// "answer" (必填) - 回复文本
+// "is_finish" (选填) - 结束状态
 
-// Example Response Template:
+// 响应示例:
 {
   "answer": "{{data.text}}",
   "is_finish": "{{data.finished}}"
@@ -128,8 +129,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                         <div className="grid w-full gap-1.5">
                             <Label htmlFor="finishMatchValue">Finish Match Value (Optional)</Label>
                             <p className="text-[10px] text-muted-foreground">
-                                If the mapped 'is_finish' field matches this string (e.g. "stop", "completed"), the request is marked as finished.
-                                If left empty, the field is treated as a boolean.
+                                若 'is_finish' 字段等于该值 (如 "stop") 则结束。留空则按 boolean 判断。
                             </p>
                             <Input
                                 id="finishMatchValue"
@@ -172,7 +172,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                                     />
                                     <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant="destructive"
                                         size="icon"
                                         onClick={() => {
                                             const newHeaders = { ...formData.customHeaders };
@@ -180,7 +180,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                                             setFormData(prev => ({ ...prev, customHeaders: newHeaders }));
                                         }}
                                     >
-                                        <Copy className="h-4 w-4 rotate-45" /> {/* Using rotate as X icon substitute or need X icon */}
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
                             ))}

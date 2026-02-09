@@ -16,6 +16,7 @@ export interface LingzhuRequest {
         role: string;
         type: string;
         text: string;
+        image_url?: string;
     }[];
 }
 

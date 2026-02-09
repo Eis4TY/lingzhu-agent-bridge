@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea" // Need to make sure this exists or use Input
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Need to install select or use native
-import { Play, Copy, Check } from "lucide-react"
+import { Play, Copy, Check, Square } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -30,7 +30,12 @@ export function Sandbox() {
         message_id: "1021",
         agent_id: "40b8cc2b2f7843feb8cfe17b8921b877",
         message: [
-            { role: "user", type: "text", text: "你好" }
+            {
+                role: "user",
+                type: "text",
+                text: "图片里有什么",
+                image_url: "https://placehold.co/100x100.png"
+            }
         ]
     }, null, 2))
 
@@ -39,6 +44,7 @@ export function Sandbox() {
     const [copiedCurl, setCopiedCurl] = React.useState(false)
     const [showCurlDialog, setShowCurlDialog] = React.useState(false)
     const [curlCommand, setCurlCommand] = React.useState("")
+    const abortControllerRef = React.useRef<AbortController | null>(null)
 
     React.useEffect(() => {
         fetch("/api/bindings").then(res => res.json()).then(setBindings)
@@ -48,8 +54,23 @@ export function Sandbox() {
         }).catch(err => console.error("Failed to load settings", err))
     }, [])
 
+    const handleStop = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort()
+            abortControllerRef.current = null
+        }
+        setLoading(false)
+        setResult((prev: any) => ({ ...prev, error: "Test cancelled by user." }))
+    }
+
     const handleTest = async () => {
         if (!selectedBindingId) return alert("Please select a binding")
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort()
+        }
+        const controller = new AbortController()
+        abortControllerRef.current = controller
+
         setLoading(true)
         setResult({ trace: [], rawResponseChunks: [], transformedResponse: null, transformedRequest: null, error: null })
         try {
@@ -70,7 +91,8 @@ export function Sandbox() {
                     bindingId: selectedBindingId,
                     request: requestParsed,
                     execute: true
-                })
+                }),
+                signal: controller.signal
             })
 
             if (!response.body) throw new Error("No response body");
@@ -132,11 +154,18 @@ export function Sandbox() {
                     }
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
+            if (e.name === 'AbortError') {
+                console.log('Fetch aborted');
+                return;
+            }
             console.error(e)
             setResult((prev: any) => ({ ...prev, error: String(e) }));
         } finally {
-            setLoading(false)
+            if (abortControllerRef.current === controller) {
+                setLoading(false)
+                abortControllerRef.current = null
+            }
         }
     }
 
@@ -198,10 +227,17 @@ export function Sandbox() {
                             ))}
                         </select>
                     </div>
-                    <Button onClick={handleTest} disabled={loading || !selectedBindingId}>
-                        <Play className="mr-2 h-4 w-4" />
-                        {loading ? "Testing..." : "Test Transformation"}
-                    </Button>
+                    {loading ? (
+                        <Button onClick={handleStop} variant="destructive">
+                            <Square className="mr-2 h-4 w-4 fill-current" />
+                            Stop
+                        </Button>
+                    ) : (
+                        <Button onClick={handleTest} disabled={!selectedBindingId}>
+                            <Play className="mr-2 h-4 w-4" />
+                            Test Transformation
+                        </Button>
+                    )}
                 </div>
             </div>
 

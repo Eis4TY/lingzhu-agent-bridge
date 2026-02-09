@@ -19,10 +19,21 @@ export class ProtocolTransformer {
             }
             return {
                 model: config?.model || "gpt-3.5-turbo",
-                messages: request.message.map(m => ({
-                    role: m.role,
-                    content: m.text
-                })),
+                messages: request.message.map(m => {
+                    if (m.image_url) {
+                        return {
+                            role: m.role,
+                            content: [
+                                { type: "text", text: m.text },
+                                { type: "image_url", image_url: { url: m.image_url } }
+                            ]
+                        };
+                    }
+                    return {
+                        role: m.role,
+                        content: m.text
+                    };
+                }),
                 stream: true
             };
         }

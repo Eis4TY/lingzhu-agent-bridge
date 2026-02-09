@@ -1,0 +1,52 @@
+[
+  {
+    "id": "d44af75d-5a39-46fe-95dc-9ef15ed13891",
+    "username": "testuser_72caf760",
+    "email": "test_9ffdd726@example.com",
+    "passwordHash": "$2b$10$s/06gx1K5heqUKmZ480DxO1Z5CnJvq84Gklz/ld4H9Rah5m7DvpxS",
+    "categories": [
+      "Default"
+    ],
+    "loginAttempts": 10,
+    "createdAt": 1770620407546,
+    "updatedAt": 1770620407760,
+    "lockUntil": 1770622207691
+  },
+  {
+    "id": "379db07e-1c2f-4850-8405-33580c858676",
+    "username": "testuser_2cefaa5c",
+    "email": "test_90c42ed5@example.com",
+    "passwordHash": "$2b$10$HkCHPCi0tPb6xCSy2iJ.kO8ZBztd45v1Y4AQWhcJ/U/9ta5ZLdive",
+    "categories": [
+      "Default"
+    ],
+    "loginAttempts": 10,
+    "createdAt": 1770620421042,
+    "updatedAt": 1770620421242,
+    "lockUntil": 1770622221176
+  },
+  {
+    "id": "dde49969-eb68-4fa9-89fd-a054ca7d98a7",
+    "username": "testuser_123",
+    "email": "testuser_123@example.com",
+    "passwordHash": "$2b$10$V7/Syp8xGLVeb2nQZidaN.QeA7mODmbNUC/havV.QEQWEfK7zDO1a",
+    "categories": [
+      "Default"
+    ],
+    "loginAttempts": 0,
+    "createdAt": 1770620590629,
+    "updatedAt": 1770620890704
+  },
+  {
+    "id": "852c0688-23e0-42d0-86f9-6f1f979dbc1f",
+    "username": "admin",
+    "email": "570703257@qq.com",
+    "passwordHash": "$2b$10$ZUFyvY.IfzYzaeKgJyF2Nuzm7qRvmaGCCvBv4BPE3OnX6GKEv9.cm",
+    "categories": [
+      "Default"
+    ],
+    "loginAttempts": 0,
+    "createdAt": 1770621211335,
+    "updatedAt": 1770621244373
+  }
+]

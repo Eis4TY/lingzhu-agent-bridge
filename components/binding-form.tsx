@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 
-
+import { Trash2, Copy } from "lucide-react"
 interface BindingFormProps {
     initialData?: Partial<ProtocolBinding>
     onSubmit: (data: Partial<ProtocolBinding>) => void
@@ -142,6 +142,65 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                     </>
                 )}
 
+                {formData.targetProtocol === "custom" && (
+                    <div className="grid w-full gap-2">
+                        <Label>HTTP Headers</Label>
+                        <div className="space-y-2">
+                            {Object.entries(formData.customHeaders || {}).map(([key, value], index) => (
+                                <div key={index} className="flex gap-2 items-center">
+                                    <Input
+                                        placeholder="Header Key"
+                                        value={key}
+                                        onChange={(e) => {
+                                            const newHeaders = { ...formData.customHeaders };
+                                            const newKey = e.target.value;
+                                            delete newHeaders[key];
+                                            newHeaders[newKey] = value;
+                                            setFormData(prev => ({ ...prev, customHeaders: newHeaders }));
+                                        }}
+                                        className="flex-1"
+                                    />
+                                    <Input
+                                        placeholder="Value"
+                                        value={value}
+                                        onChange={(e) => {
+                                            const newHeaders = { ...formData.customHeaders };
+                                            newHeaders[key] = e.target.value;
+                                            setFormData(prev => ({ ...prev, customHeaders: newHeaders }));
+                                        }}
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                            const newHeaders = { ...formData.customHeaders };
+                                            delete newHeaders[key];
+                                            setFormData(prev => ({ ...prev, customHeaders: newHeaders }));
+                                        }}
+                                    >
+                                        <Copy className="h-4 w-4 rotate-45" /> {/* Using rotate as X icon substitute or need X icon */}
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        customHeaders: { ...prev.customHeaders, "": "" }
+                                    }));
+                                }}
+                            >
+                                Add Header
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
 
 
                 <div className="grid w-full gap-1.5">
@@ -156,17 +215,19 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                     />
                 </div>
 
-                <div className="grid w-full gap-1.5">
-                    <Label htmlFor="authKey">Auth Key (Bearer Token)</Label>
-                    <Input
-                        id="authKey"
-                        name="authKey"
-                        value={formData.authKey}
-                        onChange={handleChange}
-                        type="password"
-                        placeholder="sk-..."
-                    />
-                </div>
+                {formData.targetProtocol !== "custom" && (
+                    <div className="grid w-full gap-1.5">
+                        <Label htmlFor="authKey">Auth Key (Bearer Token)</Label>
+                        <Input
+                            id="authKey"
+                            name="authKey"
+                            value={formData.authKey}
+                            onChange={handleChange}
+                            type="password"
+                            placeholder="sk-..."
+                        />
+                    </div>
+                )}
 
                 <div className="flex items-center space-x-2">
                     <Switch

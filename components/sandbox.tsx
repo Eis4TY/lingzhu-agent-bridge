@@ -9,6 +9,13 @@ import { Textarea } from "@/components/ui/textarea" // Need to make sure this ex
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Need to install select or use native
 import { Play, Copy, Check } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 // Simple Select fallback if shadcn select not installed, but let's assume we can use native for speed or try standard
 // We'll use native select for simplicity unless we install Select component
@@ -23,13 +30,15 @@ export function Sandbox() {
         message_id: "1021",
         agent_id: "40b8cc2b2f7843feb8cfe17b8921b877",
         message: [
-            { role: "user", type: "text", text: "2026年1月16日黄金价格" }
+            { role: "user", type: "text", text: "你好" }
         ]
     }, null, 2))
 
     const [result, setResult] = React.useState<any>(null)
     const [loading, setLoading] = React.useState(false)
     const [copiedCurl, setCopiedCurl] = React.useState(false)
+    const [showCurlDialog, setShowCurlDialog] = React.useState(false)
+    const [curlCommand, setCurlCommand] = React.useState("")
 
     React.useEffect(() => {
         fetch("/api/bindings").then(res => res.json()).then(setBindings)
@@ -132,7 +141,8 @@ export function Sandbox() {
     }
 
     const handleCopyCurl = async () => {
-        if (!selectedBindingId) return
+        const binding = bindings.find(b => b.id === selectedBindingId)
+        if (!selectedBindingId || !binding) return
         const url = `${window.location.origin}/api/bridge/${selectedBindingId}`
         const escapedJson = inputJson.replace(/'/g, "'\\''")
 
@@ -140,7 +150,12 @@ export function Sandbox() {
         let curlCommand = `curl -X POST "${url}" \\
   -H "Content-Type: application/json"`
 
-        if (apiKey) {
+        if (binding.targetProtocol === "custom" && binding.customHeaders) {
+            Object.entries(binding.customHeaders).forEach(([key, value]) => {
+                curlCommand += ` \\
+  -H "${key}: ${value}"`
+            })
+        } else if (apiKey) {
             curlCommand += ` \\
   -H "Authorization: Bearer ${apiKey}"`
         }
@@ -158,8 +173,8 @@ export function Sandbox() {
             }
         } catch (e) {
             console.error("Clipboard copy failed", e)
-            alert("Clipboard access failed. The cURL command has been logged to the browser console.")
-            console.log(curlCommand)
+            setCurlCommand(curlCommand)
+            setShowCurlDialog(true)
         }
     }
 
@@ -310,6 +325,24 @@ export function Sandbox() {
                     </CardContent>
                 </Card>
             </div>
+            <Dialog open={showCurlDialog} onOpenChange={setShowCurlDialog}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Copy cURL Command</DialogTitle>
+                        <DialogDescription>
+                            Clipboard access failed. Please copy the command manually.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="relative mt-4">
+                        <Textarea
+                            className="min-h-[100px] font-mono text-xs"
+                            value={curlCommand}
+                            readOnly
+                            onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

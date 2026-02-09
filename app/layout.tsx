@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/components/auth-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,10 +23,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative flex min-h-screen flex-col mx-auto max-w-7xl w-full">
-            <SiteHeader />
-            <div className="flex-1">{children}</div>
-          </div>
+          <AuthProvider>
+            <div className="relative flex min-h-screen flex-col mx-auto max-w-7xl w-full">
+              <SiteHeader />
+              <div className="flex-1">{children}</div>
+            </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

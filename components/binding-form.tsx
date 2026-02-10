@@ -75,7 +75,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                         <div className="grid w-full gap-1.5">
                             <Label htmlFor="requestTemplate">Request Mapping (JSON Template)</Label>
                             <div className="text-xs text-muted-foreground space-y-2">
-                                <p>通过 {'{{path}}'} 提取 Lingzhu 字段。</p>
+                                <p>通过 {'{{path}}'} 提取 Rokid Rizon 灵珠智能体开发平台 字段。</p>
                                 <div className="bg-muted p-2 rounded-md font-mono text-[10px] whitespace-pre-wrap">
                                     {`// 常用变量:
 // {{message.0.text}} - 用户发送的文本
@@ -106,7 +106,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                             <div className="text-xs text-muted-foreground space-y-2">
                                 <p>提取 API 响应字段。</p>
                                 <div className="bg-muted p-2 rounded-md font-mono text-[10px] whitespace-pre-wrap">
-                                    {`// Lingzhu 目标字段:
+                                    {`// Rokid Rizon 灵珠智能体开发平台 目标字段:
 // "answer" (必填) - 回复文本
 // "is_finish" (选填) - 结束状态
 
@@ -129,7 +129,7 @@ export function BindingForm({ initialData, onSubmit, onCancel }: BindingFormProp
                         <div className="grid w-full gap-1.5">
                             <Label htmlFor="finishMatchValue">Finish Match Value (Optional)</Label>
                             <p className="text-[10px] text-muted-foreground">
-                                若 'is_finish' 字段等于该值 (如 "stop") 则结束。留空则按 boolean 判断。
+                                若 &apos;is_finish&apos; 字段等于该值 (如 &quot;stop&quot;) 则结束。留空则按 boolean 判断。
                             </p>
                             <Input
                                 id="finishMatchValue"

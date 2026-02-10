@@ -181,7 +181,7 @@ export function Dashboard() {
                             <DialogHeader>
                                 <DialogTitle>Create New Binding</DialogTitle>
                                 <DialogDescription>
-                                    Connect a new AI Agent via Lingzhu Protocol.
+                                    Connect a new AI Agent via Rokid Rizon 灵珠智能体开发平台 Protocol.
                                 </DialogDescription>
                             </DialogHeader>
                             <BindingForm

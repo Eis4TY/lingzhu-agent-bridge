@@ -51,7 +51,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
             <DialogHeader>
                 <DialogTitle>Global Settings</DialogTitle>
                 <DialogDescription>
-                    Configure global settings for the Lingzhu Agent Bridge.
+                    Configure global settings for the Rokid Rizon Agent Bridge.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">

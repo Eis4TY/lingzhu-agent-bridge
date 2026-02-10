@@ -1,14 +1,14 @@
-# 灵珠 Agent Bridge (Lingzhu Agent Bridge)
+# Rokid Rizon Agent Bridge
 
-Lingzhu Agent Bridge 是一个用于连接灵珠（Lingzhu）平台与其他 Agent 协议的中间件服务。它允许开发者通过可视化的方式配置协议转换规则，将灵珠的标准协议转换为目标 Agent（如 AutoGLM 或自定义 HTTP 接口）所需的格式，实现无缝对接。
+Rokid Rizon Agent Bridge 是一个用于连接 Rokid Rizon 灵珠智能体开发平台与其他 Agent 协议的中间件服务。它允许开发者通过可视化的方式配置协议转换规则，将 Rokid Rizon 灵珠智能体开发平台的标准协议转换为目标 Agent（如 AutoGLM 或自定义 HTTP 接口）所需的格式，实现无缝对接。
 
 
-![Lingzhu Agent Bridge WebUI](./docs/ScreenShot.png)
+![Rokid Rizon Agent Bridge WebUI](./docs/ScreenShot.png)
 
 
 ## ✨ 核心功能
 
-- **协议转换引擎**：支持灵珠协议与外部协议的双向转换。
+- **协议转换引擎**：支持 Rokid Rizon 灵珠智能体开发平台协议与外部协议的双向转换。
 - **可视化绑定配置**：提供友好的 UI 界面，管理 Agent 的绑定关系。
 - **多种协议支持**：
   - **AutoGLM**: 原生支持 AutoGLM WebSocket 协议。
@@ -52,11 +52,11 @@ npm run dev
 
 ### 2. 配置自定义协议 (Custom Protocol)
 
-如果您选择了 **Custom (HTTP)** 协议，可以通过 JSON 模板定义映射规则。系统使用 `{{path}}` 语法引用灵珠请求中的数据。
+如果您选择了 **Custom (HTTP)** 协议，可以通过 JSON 模板定义映射规则。系统使用 `{{path}}` 语法引用 Rokid Rizon 灵珠智能体开发平台请求中的数据。
 
 #### 请求模版 (Request Template)
 
-将灵珠的请求转换为目标 API 的格式。
+将 Rokid Rizon 灵珠智能体开发平台的请求转换为目标 API 的格式。
 
 **可用变量**:
 - `{{message.0.text}}`: 用户发送的最新消息文本/指令。
@@ -80,7 +80,7 @@ npm run dev
 
 #### 响应模版 (Response Template)
 
-将目标 API 的响应转换为灵珠的标准格式。
+将目标 API 的响应转换为 Rokid Rizon 灵珠智能体开发平台的标准格式。
 
 **目标字段**:
 - `answer`: (必填) Agent 回复的文本内容。
@@ -99,11 +99,11 @@ npm run dev
 点击绑定卡片上的 "Debug" 按钮进入沙箱：
 - **Trace Log**: 查看完整的请求处理耗时和日志。
 - **Raw Response**: 查看目标接口返回的原始数据块。
-- **Transformed Preview**: 实时预览转换后的灵珠格式响应。
+- **Transformed Preview**: 实时预览转换后的 Rokid Rizon 灵珠智能体开发平台格式响应。
 
 ### 4. 调用 Bridge API
 
-配置完成后，使用以下接口对接灵珠平台：
+配置完成后，使用以下接口对接 Rokid Rizon 灵珠智能体开发平台：
 
 ```http
 POST /api/bridge/{agentId}
@@ -126,14 +126,14 @@ Content-Type: application/json
 ### 构建镜像
 
 ```bash
-docker build -t lingzhu-bridge .
+docker build -t rokid-rizon-agent-bridge .
 ```
 
 ### 运行容器
 
 ```bash
 # 运行在 3000 端口
-docker run -p 3000:3000 -v $(pwd)/bindings.json:/app/bindings.json lingzhu-bridge
+docker run -p 3000:3000 -v $(pwd)/bindings.json:/app/bindings.json rokid-rizon-agent-bridge
 ```
 
 > **注意**: 建议将 `bindings.json` 挂载到宿主机，以确保重启容器后绑定配置不丢失。

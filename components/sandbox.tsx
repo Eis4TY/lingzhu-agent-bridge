@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea" // Need to make sure this exists or use Input
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Need to install select or use native
+
 import { Play, Copy, Check, Square } from "lucide-react"
 import {
     Dialog,
@@ -100,15 +99,7 @@ export function Sandbox() {
             const decoder = new TextDecoder();
             let buffer = '';
 
-            // Helper to process a line
-            const processLine = (line: string) => {
-                if (!line.trim()) return;
-                // SSE format: event: name\ndata: value\n\n
-                // But we are reading chunks, so we need to buffer.
-                // Actually parsing raw SSE is tricky with simple splits if data contains newlines.
-                // Let's assume standard event-stream format handling or use a library, 
-                // but for this simple implementation, we can try to parse "event:" and "data:" prefixes.
-            };
+
 
             // Simplified SSE Parser
             while (true) {
@@ -245,7 +236,7 @@ export function Sandbox() {
                 {/* Input Column */}
                 <Card className="flex flex-col h-full">
                     <CardHeader className="py-3 px-4 border-b bg-muted/50 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-medium">Input (Lingzhu Protocol)</CardTitle>
+                        <CardTitle className="text-sm font-medium">Input (Rokid Rizon 灵珠智能体开发平台 Protocol)</CardTitle>
                         <Button
                             variant="ghost"
                             size="icon"

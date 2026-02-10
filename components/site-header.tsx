@@ -22,7 +22,7 @@ export function SiteHeader() {
             <div className="container flex h-14 items-center">
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                     <img src="/logo.png" alt="Logo" className="h-6 w-6" />
-                    <span className="font-bold sm:inline-block">Lingzhu Agent Bridge</span>
+                    <span className="font-bold sm:inline-block">Rokid Rizon Agent Bridge</span>
                 </Link>
                 <nav className="flex items-center space-x-6 text-sm font-medium">
                     <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">Dashboard</Link>

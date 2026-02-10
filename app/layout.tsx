@@ -5,8 +5,8 @@ import { AuthProvider } from "@/components/auth-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lingzhu Agent Bridge",
-  description: "Bridge between Lingzhu Protocol and generic Agents",
+  title: "Rokid Rizon Agent Bridge",
+  description: "Bridge between Rokid Rizon 灵珠智能体开发平台 and generic Agents",
 };
 
 export default function RootLayout({

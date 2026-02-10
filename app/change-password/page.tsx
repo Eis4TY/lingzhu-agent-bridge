@@ -1,29 +1,46 @@
 "use client";
 
 import { useState } from "react"
-import Link from "next/link"
-import { useAuth } from "@/components/auth-provider"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-export default function RegisterPage() {
-    const [username, setUsername] = useState("")
-    const [email, setEmail] = useState("")
+export default function ChangePasswordPage() {
     const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
-    const { register } = useAuth()
+    const router = useRouter()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError("")
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match")
+            return
+        }
+
         setLoading(true)
 
         try {
-            await register(username, email, password)
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to change password');
+            }
+
+            // Success, redirect to home
+            router.push('/');
+            router.refresh();
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -35,9 +52,9 @@ export default function RegisterPage() {
         <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
             <Card className="w-full max-w-sm">
                 <CardHeader>
-                    <CardTitle className="text-2xl">Register</CardTitle>
+                    <CardTitle className="text-2xl">Change Password</CardTitle>
                     <CardDescription>
-                        Create a new account
+                        You must change your password before continuing.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -49,28 +66,7 @@ export default function RegisterPage() {
                             </Alert>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="username">Username</Label>
-                            <Input
-                                id="username"
-                                placeholder="username"
-                                required
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="m@example.com"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">New Password</Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -79,17 +75,21 @@ export default function RegisterPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Input
+                                id="confirmPassword"
+                                type="password"
+                                required
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                        </div>
 
                         <div className="flex flex-col gap-4 mt-6">
                             <Button className="w-full" type="submit" disabled={loading}>
-                                {loading ? "Creating account..." : "Register"}
+                                {loading ? "Updating..." : "Update Password"}
                             </Button>
-                            <div className="text-sm text-center text-muted-foreground">
-                                Already have an account?{" "}
-                                <Link href="/login" className="underline hover:text-primary">
-                                    Login
-                                </Link>
-                            </div>
                         </div>
                     </form>
                 </CardContent>

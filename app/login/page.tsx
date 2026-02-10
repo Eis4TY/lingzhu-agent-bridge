@@ -10,8 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function LoginPage() {
-    const [identifier, setIdentifier] = useState("")
-    const [password, setPassword] = useState("")
+    const [identifier, setIdentifier] = useState("admin")
+    const [password, setPassword] = useState("admin")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const { login } = useAuth()
@@ -40,6 +40,12 @@ export default function LoginPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <Alert className="mb-4 bg-blue-50 text-blue-900 border-blue-200">
+                        <AlertTitle>提示</AlertTitle>
+                        <AlertDescription>
+                            默认密码是 admin，登录后建议修改密码
+                        </AlertDescription>
+                    </Alert>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {error && (
                             <Alert variant="destructive">
@@ -48,10 +54,10 @@ export default function LoginPage() {
                             </Alert>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="identifier">Username or Email</Label>
+                            <Label htmlFor="identifier">Username</Label>
                             <Input
                                 id="identifier"
-                                placeholder="m@example.com"
+                                placeholder="username"
                                 required
                                 value={identifier}
                                 onChange={(e) => setIdentifier(e.target.value)}
@@ -72,12 +78,6 @@ export default function LoginPage() {
                             <Button className="w-full" type="submit" disabled={loading}>
                                 {loading ? "Logging in..." : "Login"}
                             </Button>
-                            <div className="text-sm text-center text-muted-foreground">
-                                Don't have an account?{" "}
-                                <Link href="/register" className="underline hover:text-primary">
-                                    Register
-                                </Link>
-                            </div>
                         </div>
                     </form>
                 </CardContent>

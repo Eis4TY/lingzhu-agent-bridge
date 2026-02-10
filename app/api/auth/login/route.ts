@@ -5,7 +5,7 @@ import { login } from '@/lib/auth';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { identifier, password } = body; // identifier can be username or email
+        const { identifier, password } = body; // identifier is username
 
         if (!identifier || !password) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
         await UserService.handleLoginAttempt(user.id, true);
 
         // Create session
-        await login({ id: user.id, username: user.username, email: user.email });
+        await login({ id: user.id, username: user.username });
 
-        return NextResponse.json({ success: true, user: { id: user.id, username: user.username, email: user.email } });
+        return NextResponse.json({ success: true, user: { id: user.id, username: user.username } });
     } catch (error: any) {
         return NextResponse.json({ error: error.message || 'Login failed' }, { status: 500 });
     }

@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
 
     if (sessionCookie) {
         try {
-            user = await decrypt(sessionCookie.value);
+            user = await decrypt(sessionCookie.value); // User type is any here, but we expect it to have mustChangePassword
         } catch (e) {
             // invalid session
         }
@@ -30,6 +30,16 @@ export async function middleware(request: NextRequest) {
 
     if (isAuthRoute && user) {
         return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    // Force password change
+    if (user && user.mustChangePassword) {
+        // Allow access to change-password page and api
+        if (!pathname.startsWith('/change-password') &&
+            !pathname.startsWith('/api/auth/change-password') &&
+            !pathname.startsWith('/api/auth/logout')) {
+            return NextResponse.redirect(new URL('/change-password', request.url));
+        }
     }
 
     return NextResponse.next();

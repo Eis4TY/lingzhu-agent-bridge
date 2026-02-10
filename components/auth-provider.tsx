@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 interface User {
     id: string;
     username: string;
-    email: string;
+
     categories: string[];
 }
 
@@ -14,7 +14,6 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (identifier: string, password: string) => Promise<void>;
-    register: (username: string, email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -65,23 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.refresh();
     };
 
-    const register = async (username: string, email: string, password: string) => {
-        const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password }),
-        });
 
-        if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.error || 'Registration failed');
-        }
-
-        const data = await res.json();
-        setUser(data.user);
-        router.push('/');
-        router.refresh();
-    };
 
     const logout = async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
@@ -91,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );
